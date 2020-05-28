@@ -1,10 +1,12 @@
 package com.example.coroutines.main
 
-import androidx.lifecycle.LiveData
-import com.example.coroutines.main.data.GeneralResult
-
+import com.example.coroutines.main.data.Dog
+import com.example.coroutines.main.data.Result
 
 interface MainActivityRepository {
 
-    fun getAllBreeds(): LiveData<GeneralResult>
+    suspend fun getListOfDogs(): Result<List<Dog>>
+
+    suspend fun getTopTwoDogsAsync(): Result<List<Dog>>
+
 }
