@@ -25,7 +25,7 @@ internal class AppModule {
 
     private fun retrofitConfiguration(client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://dog.ceo/api/breeds/")
+            .baseUrl("https://dog.ceo/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

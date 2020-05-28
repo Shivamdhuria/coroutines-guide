@@ -1,13 +1,17 @@
 package com.example.coroutines.main
 
 import android.os.Bundle
-import android.widget.Toast
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.coroutines.R
-import com.example.coroutines.main.data.GeneralResult
+import com.example.coroutines.main.data.Dog
+import com.example.coroutines.util.ImageLoader
+import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.item_dog_of_the_day.view.*
 import javax.inject.Inject
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -26,20 +30,39 @@ class MainActivity : DaggerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         recycler.adapter = adapter
-        viewModel.status.observe(this, Observer {
-            when (it) {
-                is GeneralResult.Progress -> {
-                }
-                is GeneralResult.Success<*> -> {
-                    val list = it.data as Map<String, List<String>>
+        viewModel.loadTopTwoDogsAsync()
+        viewModel.loadDogListSynchronously()
+        subscribeObservers()
+    }
 
-                    adapter.submitList(list.keys.toList())
+    private fun subscribeObservers() {
+        viewModel.spinner.observe(this, Observer { show ->
+            spinner.visibility = if (show) VISIBLE else GONE
+        })
+        viewModel.snackbar.observe(this, Observer { text ->
+            text?.let {
+                Snackbar.make(root_layout, text, Snackbar.LENGTH_SHORT).show()
+                viewModel.onSnackbarShown()
+            }
+        })
+
+        viewModel.topDogsAsync.observe(this, Observer {
+            it?.let {
+                it[0].let {
+                    dog_one.breed_name.text = it.breed
+                    it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_one.episode_item_image) }
                 }
-                is GeneralResult.Error -> {
-                    Toast.makeText(this, it.error, Toast.LENGTH_SHORT).show()
+
+                it[1].let {
+                    dog_two.breed_name.text = it.breed
+                    it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_two.episode_item_image) }
                 }
             }
         })
-        viewModel.fetchBreeds()
+
+        viewModel.dogList.observe(this, Observer {
+            val list = it as List<Dog>
+            adapter.submitList(list)
+        })
     }
 }

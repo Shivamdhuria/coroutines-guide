@@ -16,6 +16,7 @@ internal object ImageLoader {
     fun loadImage(context: Context, url: String, imageView: ImageView, radius: Int = 1) {
         Glide.with(context)
             .load(url)
+            .fitCenter()
             .transition(withCrossFade())
             .transform(MultiTransformation(CenterCrop(), RoundedCorners(radius)))
             .into(imageView)

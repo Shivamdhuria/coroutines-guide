@@ -16,7 +16,7 @@ fun ViewGroup.inflate(@LayoutRes layout: Int): View {
  */
 
 fun logCoroutine(methodName: String, coroutineContext: CoroutineContext) {
-    Log.d(
+    Log.e(
         "TestCoroutine", "Thread for $methodName is: ${Thread.currentThread().name}" +
                 "and the context is $coroutineContext"
     )

@@ -8,7 +8,7 @@ import retrofit2.Retrofit
 internal class MainActivityModule {
 
     @Provides
-    fun provideMainActivityRepository(api:MainActivityApi): MainActivityRepository = MainActivityRemoteRepository(api)
+    fun provideMainActivityRepository(api:MainActivityApi): MainActivityRepository = MainActivityRepositoryImpl(api)
 
     @Provides
     fun provideEditProfileApi(retrofit: Retrofit): MainActivityApi = retrofit.create(MainActivityApi::class.java)
