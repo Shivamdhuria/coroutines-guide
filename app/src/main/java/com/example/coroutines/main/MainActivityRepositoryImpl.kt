@@ -5,11 +5,25 @@ import com.example.coroutines.main.data.Dog
 import com.example.coroutines.main.data.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 internal class MainActivityRepositoryImpl @Inject constructor(private val api: MainActivityApi) :
     MainActivityRepository {
+
+    override suspend fun getListOfDogsSync(): Result<List<Dog>> {
+        //No need to change context to Dispatchers.IO as Retrofit handles that automatically.
+        val list = mutableListOf<Dog>()
+        //Remove async{} and .await()
+        val dogBreedList = api.getBreedsList().message.keys.toList()
+        //This function is paused until the above api returns results.
+        dogBreedList.forEach {
+            val dogImage = api.getImageByUrl(it).message
+            list.add(Dog(it, dogImage))
+        }
+        return Result(list, null)
+    }
 
 //    override suspend fun getListOfDogs(): Result<List<Dog>> = withContext(Dispatchers.IO) {
 //        val list = mutableListOf<Dog>()
@@ -57,7 +71,6 @@ internal class MainActivityRepositoryImpl @Inject constructor(private val api: M
             dogBreedTwoName?.let { api.getImageByUrlAsync(it).execute() }
         }
 
-
         //Await for both the started coroutines above by using await on the deferred val .
         val dogBreedOne = dogBreedOneImageDeferred.await()
         val dogBreedTwo = dogBreedTwoImageDeferred.await()
@@ -68,16 +81,40 @@ internal class MainActivityRepositoryImpl @Inject constructor(private val api: M
     }
 
 
-    override suspend fun getListOfDogs(): Result<List<Dog>> {
+//    override suspend fun getListOfDogs(): Result<List<Dog>> {
+//        //No need to change context to Dispatchers.IO as Retrofit handles that automatically.
+//        val list = mutableListOf<Dog>()
+//        //Remove async{} and .await()
+//        val dogBreedList = api.getBreedsList().message.keys.toList()
+//        //This function is paused until the above api returns results.
+//        dogBreedList.forEach {
+//            val dogImage = api.getImageByUrl(it).message
+//            list.add(Dog(it, dogImage))
+//        }
+//        return Result(list, null)
+//    }
+
+
+    //try async
+    override suspend fun getListOfDogsAsync(): Result<List<Dog>> {
         //No need to change context to Dispatchers.IO as Retrofit handles that automatically.
         val list = mutableListOf<Dog>()
         //Remove async{} and .await()
         val dogBreedList = api.getBreedsList().message.keys.toList()
         //This function is paused until the above api returns results.
-        dogBreedList.forEach {
-            val dogImage = api.getImageByUrl(it).message
-            list.add(Dog(it, dogImage))
+
+        withContext(Dispatchers.IO) {
+            dogBreedList.map {
+                async { api.getImageByUrl(it) }
+            }.awaitAll().forEach {
+                list.add(Dog(extractBreedName(it.message), it.message))
+            }
         }
         return Result(list, null)
+    }
+
+    private fun extractBreedName(message: String): String? {
+        val breedName = message.substringAfter("breeds/").substringBefore("/")
+        return breedName.replace(Regex("-"), " ").capitalize()
     }
 }

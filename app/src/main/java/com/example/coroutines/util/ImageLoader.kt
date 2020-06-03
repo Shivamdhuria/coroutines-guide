@@ -1,6 +1,8 @@
 package com.example.coroutines.util
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.widget.ImageView
 import com.bumptech.glide.Glide
