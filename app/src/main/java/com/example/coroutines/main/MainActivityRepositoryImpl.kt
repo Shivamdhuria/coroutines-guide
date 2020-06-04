@@ -68,16 +68,13 @@ internal class MainActivityRepositoryImpl @Inject constructor(private val api: M
 
         withContext(Dispatchers.IO) {
 
-//            dogBreedList.map {
-////                async { api.getImageByUrl(it) }
-////            }.awaitAll().forEach {
-////                list.add(Dog(extractBreedName(it.message), it.message))
-////            }
+            dogBreedList.map { async { api.getImageByUrl(it) } }.awaitAll().forEach {
+                list.add(Dog(extractBreedName(it.message), it.message))
+            }
 
             //Using extension function for nicer code
-            asyncAll(dogBreedList) { api.getImageByUrl(it) }.awaitAll().forEach { list.add(Dog(extractBreedName(it.message), it.message)) }
+//            asyncAll(dogBreedList) { api.getImageByUrl(it) }.awaitAll().forEach { list.add(Dog(extractBreedName(it.message), it.message)) }
         }
-
         return Result(list, null)
     }
 
