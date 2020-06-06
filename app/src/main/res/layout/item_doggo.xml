@@ -39,6 +39,7 @@
                 android:textAppearance="?attr/textAppearanceListItem"
                 android:textColor="@android:color/white"
                 android:textSize="18sp"
+                android:padding="12dp"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/episode_item_image"

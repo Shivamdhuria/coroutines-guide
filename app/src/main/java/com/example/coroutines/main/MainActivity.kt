@@ -31,14 +31,39 @@ class MainActivity : DaggerAppCompatActivity() {
         setContentView(R.layout.activity_main)
         recycler.adapter = adapter
         viewModel.loadTopTwoDogsAsync()
-        viewModel.loadDogListSynchronously()
         subscribeObservers()
+        initListeners()
+    }
+
+    private fun initListeners() {
+        toggleButtonGroup.addOnButtonCheckedListener { group, checkedId, isChecked ->
+            if (isChecked) {
+                when (checkedId) {
+                    R.id.buttonAsync -> fetchImagesAsynchronously()
+                    R.id.buttonSync -> fetchImagesSynchronously()
+                }
+            }
+        }
+    }
+
+    private fun fetchImagesSynchronously() {
+        viewModel.loadDogListSynchronously()
+    }
+
+    private fun fetchImagesAsynchronously() {
+        viewModel.loadDogListAsynchronously()
     }
 
     private fun subscribeObservers() {
         viewModel.spinner.observe(this, Observer { show ->
             spinner.visibility = if (show) VISIBLE else GONE
         })
+
+        viewModel.status.observe(this, Observer { it ->
+            time.text = it
+        })
+
+
         viewModel.snackbar.observe(this, Observer { text ->
             text?.let {
                 Snackbar.make(root_layout, text, Snackbar.LENGTH_SHORT).show()
