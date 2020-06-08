@@ -30,7 +30,6 @@ class MainActivity : DaggerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         recycler.adapter = adapter
-        viewModel.loadTopTwoDogsAsync()
         subscribeObservers()
         initListeners()
     }

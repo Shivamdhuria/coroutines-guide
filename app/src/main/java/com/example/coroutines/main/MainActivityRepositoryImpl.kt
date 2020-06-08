@@ -41,8 +41,8 @@ internal class MainActivityRepositoryImpl @Inject constructor(private val api: M
         val dogBreedOne = dogBreedOneImageDeferred.await()
         val dogBreedTwo = dogBreedTwoImageDeferred.await()
 
-        if (dogBreedTwo?.isSuccessful!!) list.add(Dog(dogBreedTwoName, dogBreedTwo.body()?.message))
-        if (dogBreedOne?.isSuccessful!!) list.add(Dog(dogBreedOneName, dogBreedOne.body()?.message))
+        if (dogBreedTwo?.isSuccessful!!) list.add(Dog(dogBreedTwoName?.capitalize(), dogBreedTwo.body()?.message))
+        if (dogBreedOne?.isSuccessful!!) list.add(Dog(dogBreedOneName?.capitalize(), dogBreedOne.body()?.message))
         Result(list, null)
     }
 
