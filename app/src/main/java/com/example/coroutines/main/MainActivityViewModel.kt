@@ -42,20 +42,21 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
     }
 
     private fun loadTopTwoDogsAsync() {
-        launch {
+       viewModelScope.launch {
             logCoroutine("loadTopTwoDogsAsync", coroutineContext)
             val list = runCatching { mainActivityRepository.getTopTwoDogsAsync() }
             list.onSuccess {
                 _topDogsAsync.value = it.value
             }.onFailure {
                 _snackbar.value = it.message.toString()
+                _snackbar.value = "loadTopTwoDogsAsync() " + it.message.toString()
             }
         }
     }
 
     fun loadDogListSynchronously() {
-        _dogList.value = emptyList()
         parentJob.cancelChildren()
+        _dogList.value = emptyList()
         launch {
             _status.value = "Loading..."
             val start = System.currentTimeMillis()
@@ -65,7 +66,7 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
                 _dogList.value = it.value
             }.onFailure {
                 _status.value = "Failed."
-                _snackbar.value = it.message.toString()
+                _snackbar.value = "loadDogListSynchronously() " + it.message.toString()
             }
         }
     }
@@ -82,7 +83,7 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
                 _dogList.value = it.value
             }.onFailure {
                 _status.value = "Failed."
-                _snackbar.value = it.message.toString()
+                _snackbar.value = "loadDogListAsynchronously() " + it.message.toString()
             }
         }
     }
