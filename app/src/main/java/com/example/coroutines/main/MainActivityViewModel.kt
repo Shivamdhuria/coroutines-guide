@@ -19,6 +19,10 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
     private val _spinner = MutableLiveData(false)
     private val _topDogsAsync = MutableLiveData<List<Dog>>()
 
+    init {
+        loadTopTwoDogsAsync()
+    }
+
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + parentJob
 
@@ -37,7 +41,7 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
         _snackbar.value = null
     }
 
-    fun loadTopTwoDogsAsync() {
+    private fun loadTopTwoDogsAsync() {
         launch {
             logCoroutine("loadTopTwoDogsAsync", coroutineContext)
             val list = runCatching { mainActivityRepository.getTopTwoDogsAsync() }
