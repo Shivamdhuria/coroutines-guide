@@ -1,16 +1,17 @@
 package com.example.coroutines.main
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.coroutines.extensions.logCoroutine
+import androidx.lifecycle.*
+import com.example.coroutines.extensions.logCoroutineThreadNameOnly
 import com.example.coroutines.main.data.Dog
+import com.example.coroutines.util.GeneralResult
 import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 class MainActivityViewModel @Inject constructor(private val mainActivityRepository: MainActivityRepository) : ViewModel(), CoroutineScope {
+    private companion object {
+        private const val DELAY_BETWEEN_DOGS_IN_MS = 10000L
+    }
 
     private val parentJob = SupervisorJob()
     private val _dogList = MutableLiveData<List<Dog>>()
@@ -20,7 +21,7 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
     private val _topDogsAsync = MutableLiveData<List<Dog>>()
 
     init {
-        loadTopTwoDogsAsync()
+//        loadTopTwoDogsAsync()
     }
 
     override val coroutineContext: CoroutineContext
@@ -41,17 +42,43 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
         _snackbar.value = null
     }
 
-    private fun loadTopTwoDogsAsync() {
-       viewModelScope.launch {
-            logCoroutine("loadTopTwoDogsAsync", coroutineContext)
-            val list = runCatching { mainActivityRepository.getTopTwoDogsAsync() }
-            list.onSuccess {
-                _topDogsAsync.value = it.value
-            }.onFailure {
-                _snackbar.value = it.message.toString()
-                _snackbar.value = "loadTopTwoDogsAsync() " + it.message.toString()
-            }
+//    private fun loadTopTwoDogsAsync() {
+//        viewModelScope.launch {
+//            logCoroutine("loadTopTwoDogsAsync", coroutineContext)
+//            val list = runCatching { mainActivityRepository.getTopTwoDogsAsync() }
+//            list.onSuccess {
+//                _topDogsAsync.value = it.value
+//            }.onFailure {
+//                _snackbar.value = it.message.toString()
+//                _snackbar.value = "loadTopTwoDogsAsync() " + it.message.toString()
+//            }
+//        }
+//    }
+
+
+    private fun getTopTwoDogsLiveData(): LiveData<GeneralResult> = liveData {
+        while (true) {
+            delay(DELAY_BETWEEN_DOGS_IN_MS)
+            val topTwoDogsResult = mainActivityRepository.getTopTwoDogsAsync()
+            emit(topTwoDogsResult)
         }
+    }
+
+
+//    val liveDataResult = liveData(Dispatchers.IO) {
+//        logCoroutineThreadNameOnly("liveDataResult")
+//        emit(GeneralResult.Progress(true))
+//        //This below function is a suspend function
+//        val topTwoDogsResult = mainActivityRepository.getTopTwoDogsAsync()
+//        emit(topTwoDogsResult)
+//    }
+
+    //consumeing live data source
+
+    val liveDataResult = liveData {
+        logCoroutineThreadNameOnly("liveDataResult")
+        emit(GeneralResult.Progress(true))
+        emitSource(getTopTwoDogsLiveData())
     }
 
     fun loadDogListSynchronously() {
