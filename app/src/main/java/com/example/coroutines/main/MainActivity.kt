@@ -1,12 +1,14 @@
 package com.example.coroutines.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.coroutines.R
 import com.example.coroutines.main.data.Dog
+import com.example.coroutines.util.GeneralResult
 import com.example.coroutines.util.ImageLoader
 import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerAppCompatActivity
@@ -88,5 +90,50 @@ class MainActivity : DaggerAppCompatActivity() {
             val list = it as List<Dog>
             adapter.submitList(list)
         })
+
+//        viewModel.topTwoDogs.observe(this, Observer {
+//            when (it) {
+//                is GeneralResult.Progress -> {
+//                }
+//                is GeneralResult.SuccessGeneric<*> -> {
+//                    updateTopTwoDogs(it.data as List<Dog>)
+//                }
+//                is GeneralResult.Error -> {
+//                }
+//            }
+//        })
+
+
+        viewModel.liveDataResult.observe(this, Observer {
+            Log.e("liveDataResult", it.toString())
+            when (it) {
+                is GeneralResult.Progress -> { showLoadingStatus(it.loading)}
+                is GeneralResult.SuccessGeneric<*> -> {
+                    showLoadingStatus(false)
+                    updateTopTwoDogs(it.data as List<Dog>)
+                }
+                is GeneralResult.Error -> {
+                }
+            }
+        })
+
+    }
+
+    private fun showLoadingStatus(loading: Boolean) {
+        statusTop.text = if (loading) "Loading..." else "Finished"
+    }
+
+    private fun updateTopTwoDogs(it: List<Dog>) {
+        it.let {
+            it[0].let {
+                dog_one.breed_name.text = it.breed
+                it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_one.episode_item_image) }
+            }
+
+            it[1].let {
+                dog_two.breed_name.text = it.breed
+                it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_two.episode_item_image) }
+            }
+        }
     }
 }
