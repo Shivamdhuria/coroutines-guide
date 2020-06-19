@@ -1,14 +1,14 @@
-package com.example.coroutines.main
+package com.example.coroutines.main.network
 
 import com.example.coroutines.main.data.ApiResponse
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Path
 
-internal interface MainActivityApi {
+interface MainActivityApi {
 
     @GET("breeds/list/all")
-    fun getAllBreeds(): Call<ApiResponse<Map<String, List<String>>>>
+    suspend fun getAllBreeds(): ApiResponse<Map<String, List<String>>>
 
     @GET("breeds/list/all")
     fun getBreedsListAsync(): Call<ApiResponse<Map<String, List<String>>>>
@@ -21,4 +21,8 @@ internal interface MainActivityApi {
 
     @GET("breeds/list/all")
     suspend fun getBreedsList(): ApiResponse<Map<String, List<String>>>
+
+    @GET("breeds/image/random")
+    suspend fun getRandomImageByUrl(): ApiResponse<String>
+
 }

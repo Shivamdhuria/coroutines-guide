@@ -1,14 +1,12 @@
 package com.example.coroutines.main
 
 import androidx.lifecycle.*
-import com.example.coroutines.extensions.logCoroutineThreadNameOnly
 import com.example.coroutines.main.data.Dog
-import com.example.coroutines.util.GeneralResult
 import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
-class MainActivityViewModel @Inject constructor(private val mainActivityRepository: MainActivityRepository) : ViewModel(), CoroutineScope {
+class MainActivityViewModel @Inject constructor(private val mainActivityRepository: MainActivityRepository) : ViewModel() {
     private companion object {
         private const val DELAY_BETWEEN_DOGS_IN_MS = 10000L
     }
@@ -17,15 +15,14 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
     private val _dogList = MutableLiveData<List<Dog>>()
     private val _snackbar = MutableLiveData<String?>()
     private val _status = MutableLiveData<String?>()
+    private val _inputLiveData = MutableLiveData<Int>()
     private val _spinner = MutableLiveData(false)
     private val _topDogsAsync = MutableLiveData<List<Dog>>()
+    private val atomicInteger = AtomicInteger()
 
     init {
 //        loadTopTwoDogsAsync()
     }
-
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + parentJob
 
     val dogList: LiveData<List<Dog>>
         get() = _dogList
@@ -42,6 +39,34 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
         _snackbar.value = null
     }
 
+    @ExperimentalCoroutinesApi
+    val dogListLiveData = mainActivityRepository.episodesFlow.asLiveData()
+
+//    fun loadMoreDogs(){
+//        loadData { mainActivityRepository.tryUpdateDogCache() }
+//    }
+
+
+    val liveDateFetch = _inputLiveData.switchMap {
+        liveData {
+            emit(mainActivityRepository.tryFetchAndUpdate())
+        }
+    }
+
+    private fun loadData(block: suspend () -> Unit): Job {
+        return viewModelScope.launch {
+            try {
+                _spinner.value = true
+                block()
+            } catch (error: Throwable) {
+                _snackbar.value = error.message
+            } finally {
+                _spinner.value = false
+            }
+        }
+    }
+
+
 //    private fun loadTopTwoDogsAsync() {
 //        viewModelScope.launch {
 //            logCoroutine("loadTopTwoDogsAsync", coroutineContext)
@@ -56,13 +81,21 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
 //    }
 
 
-    private fun getTopTwoDogsLiveData(): LiveData<GeneralResult> = liveData {
-        while (true) {
-            delay(DELAY_BETWEEN_DOGS_IN_MS)
-            val topTwoDogsResult = mainActivityRepository.getTopTwoDogsAsync()
-            emit(topTwoDogsResult)
-        }
-    }
+//    private fun getTopTwoDogsLiveData(): LiveData<GeneralResult> = liveData {
+//        while (true) {
+//            delay(DELAY_BETWEEN_DOGS_IN_MS)
+//            val topTwoDogsResult = mainActivityRepository.getTopTwoDogsAsync()
+//            emit(topTwoDogsResult)
+//        }
+//    }
+
+//    private fun getTopTwoDogsLiveData(): LiveData<GeneralResult> = liveData {
+//        while (true) {
+//            delay(DELAY_BETWEEN_DOGS_IN_MS)
+//            val topTwoDogsResult = mainActivityRepository.getTopTwoDogsAsync()
+//            emit(topTwoDogsResult)
+//        }
+//    }
 
 
 //    val liveDataResult = liveData(Dispatchers.IO) {
@@ -73,47 +106,66 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
 //        emit(topTwoDogsResult)
 //    }
 
-    //consumeing live data source
+//consumeing live data source
 
-    val liveDataResult = liveData {
-        logCoroutineThreadNameOnly("liveDataResult")
-        emit(GeneralResult.Progress(true))
-        emitSource(getTopTwoDogsLiveData())
-    }
+    @ExperimentalCoroutinesApi
+//    val liveDataResult = _inputLiveData.switchMap {
+//        mainActivityRepository
+//            .getRandomDogImage()
+//            .onStart { emit(GenericApiResponse.Loading()) }
+//            .catch { emit(handleException(it)) }
+//            .asLiveData()
+//    }
 
-    fun loadDogListSynchronously() {
-        parentJob.cancelChildren()
-        _dogList.value = emptyList()
-        launch {
-            _status.value = "Loading..."
-            val start = System.currentTimeMillis()
-            val result = runCatching { mainActivityRepository.getListOfDogsSync() }
-            result.onSuccess {
-                _status.value = getTimeDifference(start)
-                _dogList.value = it.value
-            }.onFailure {
-                _status.value = "Failed."
-                _snackbar.value = "loadDogListSynchronously() " + it.message.toString()
-            }
-        }
-    }
 
-    fun loadDogListAsynchronously() {
-        parentJob.cancelChildren()
-        _dogList.value = emptyList()
-        launch {
-            _status.value = "Loading..."
-            val start = System.currentTimeMillis()
-            val result = runCatching { mainActivityRepository.getListOfDogsAsync() }
-            result.onSuccess {
-                _status.value = getTimeDifference(start)
-                _dogList.value = it.value
-            }.onFailure {
-                _status.value = "Failed."
-                _snackbar.value = "loadDogListAsynchronously() " + it.message.toString()
-            }
-        }
-    }
+//use this to update pic evevry 2 sec
+//    val liveDataResult = _inputLiveData.switchMap {
+////        mainActivityRepository
+////            .getRandomDog()
+////            .onStart { emit(ResultWrapper.Loading()) }
+////            .map {
+////                logCoroutineThreadNameOnly("live data result map")
+////                delay(10000)
+////                it
+////            }
+////            .flowOn(Dispatchers.IO)
+////            .catch { emit(handleException(it)) }
+////            .asLiveData()
+////    }
+
+//    fun loadDogListSynchronously() {
+//        parentJob.cancelChildren()
+//        _dogList.value = emptyList()
+//        launch {
+//            _status.value = "Loading..."
+//            val start = System.currentTimeMillis()
+//            val result = runCatching { mainActivityRepository.getListOfDogsSync() }
+//            result.onSuccess {
+//                _status.value = getTimeDifference(start)
+//                _dogList.value = it.value
+//            }.onFailure {
+//                _status.value = "Failed."
+//                _snackbar.value = "loadDogListSynchronously() " + it.message.toString()
+//            }
+//        }
+//    }
+//
+//    fun loadDogListAsynchronously() {
+//        parentJob.cancelChildren()
+//        _dogList.value = emptyList()
+//        launch {
+//            _status.value = "Loading..."
+//            val start = System.currentTimeMillis()
+//            val result = runCatching { mainActivityRepository.getListOfDogsAsync() }
+//            result.onSuccess {
+//                _status.value = getTimeDifference(start)
+//                _dogList.value = it.value
+//            }.onFailure {
+//                _status.value = "Failed."
+//                _snackbar.value = "loadDogListAsynchronously() " + it.message.toString()
+//            }
+//        }
+//    }
 
     private fun getTimeDifference(start: Long): String {
         val difference = System.currentTimeMillis() - start
@@ -129,18 +181,11 @@ class MainActivityViewModel @Inject constructor(private val mainActivityReposito
         parentJob.cancelChildren()
     }
 
-    private fun loadData(block: suspend () -> Unit): Job {
-        return viewModelScope.launch {
-            try {
-                _spinner.value = true
-                block()
-            } catch (error: Throwable) {
-                //show error
-            } finally {
-                _spinner.value = false
-            }
-        }
+    fun fetchDogsFlow() {
+        _inputLiveData.value = atomicInteger.incrementAndGet()
     }
+
+
 }
 
 

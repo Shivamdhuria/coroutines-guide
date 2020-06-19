@@ -1,6 +1,12 @@
 package com.example.coroutines.main.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
 data class Dog(
-    val breed : String?,
-    val imageUsl: String?
+    @PrimaryKey
+    val breed : String,
+    val imageUrl: String?,
+    var isTopDog: Boolean = false
 )

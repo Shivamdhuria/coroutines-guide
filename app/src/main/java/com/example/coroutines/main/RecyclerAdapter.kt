@@ -1,5 +1,6 @@
 package com.example.coroutines.main
 
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -11,6 +12,7 @@ import com.example.coroutines.main.data.Dog
 import com.example.coroutines.util.ImageLoader
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_doggo.view.*
+
 
 class RecyclerAdapter : ListAdapter<Dog, RecyclerAdapter.UserDateViewHolder>(UserDataAdapterListDiff()) {
 
@@ -38,7 +40,10 @@ class RecyclerAdapter : ListAdapter<Dog, RecyclerAdapter.UserDateViewHolder>(Use
 
         fun bind(dog: Dog) {
             containerView.breed_name.text = dog.breed?.capitalize()
-            dog.imageUsl?.let { it1 -> ImageLoader.loadImageWithCircularCrop(containerView.context, it1, containerView.episode_item_image) }
+            dog.imageUrl?.let { it1 -> ImageLoader.loadImageWithCircularCrop(containerView.context, it1, containerView.doggo_image) }
+            if (dog.isTopDog) {
+                this.containerView.card_layout.setCardBackgroundColor(Color.MAGENTA)
+            }
         }
     }
 }

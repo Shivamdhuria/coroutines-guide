@@ -1,7 +1,11 @@
 package com.example.coroutines.app
 
 import android.content.Context
+import androidx.room.Room
 import com.example.coroutines.BuildConfig
+import com.example.coroutines.app.AppDatabase.Companion.DATABASE_NAME
+import com.example.coroutines.main.data.DogDao
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
@@ -51,4 +55,18 @@ internal class AppModule {
         }
         return interceptor
     }
+
+    @Provides
+    @Singleton
+    fun provideMoshi(): Moshi = Moshi.Builder().build()
+
+    @Provides
+    fun provideDogDao(db: AppDatabase): DogDao = db.getDogDao()
+
+    @Singleton
+    @Provides
+    fun provideAppDb(app: CoroutineApplication): AppDatabase = Room
+        .databaseBuilder(app, AppDatabase::class.java, DATABASE_NAME)
+        .fallbackToDestructiveMigration()
+        .build()
 }

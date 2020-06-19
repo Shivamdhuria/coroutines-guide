@@ -2,18 +2,15 @@ package com.example.coroutines.main
 
 import android.os.Bundle
 import android.util.Log
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.coroutines.R
-import com.example.coroutines.main.data.Dog
-import com.example.coroutines.util.GeneralResult
-import com.example.coroutines.util.ImageLoader
+import com.example.coroutines.error.ResultWrapper
+import com.example.coroutines.extensions.showToast
 import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.item_dog_of_the_day.view.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -37,32 +34,37 @@ class MainActivity : DaggerAppCompatActivity() {
     }
 
     private fun initListeners() {
-        toggleButtonGroup.addOnButtonCheckedListener { group, checkedId, isChecked ->
-            if (isChecked) {
-                when (checkedId) {
-                    R.id.buttonAsync -> fetchImagesAsynchronously()
-                    R.id.buttonSync -> fetchImagesSynchronously()
-                }
-            }
+//        toggleButtonGroup.addOnButtonCheckedListener { group, checkedId, isChecked ->
+//            if (isChecked) {
+//                when (checkedId) {
+//                    R.id.buttonAsync -> fetchImagesAsynchronously()
+//                    R.id.buttonSync -> fetchImagesSynchronously()
+//                }
+//            }
+//        }
+
+        loadMore.setOnClickListener {
+            viewModel.fetchDogsFlow()
         }
     }
 
-    private fun fetchImagesSynchronously() {
-        viewModel.loadDogListSynchronously()
-    }
+//    private fun fetchImagesSynchronously() {
+//        viewModel.loadDogListSynchronously()
+//    }
+//
+//    private fun fetchImagesAsynchronously() {
+//        viewModel.loadDogListAsynchronously()
+//    }
 
-    private fun fetchImagesAsynchronously() {
-        viewModel.loadDogListAsynchronously()
-    }
-
+    @ExperimentalCoroutinesApi
     private fun subscribeObservers() {
-        viewModel.spinner.observe(this, Observer { show ->
-            spinner.visibility = if (show) VISIBLE else GONE
-        })
-
-        viewModel.status.observe(this, Observer { it ->
-            time.text = it
-        })
+//        viewModel.spinner.observe(this, Observer { show ->
+//            spinner.visibility = if (show) VISIBLE else GONE
+//        })
+//
+//        viewModel.status.observe(this, Observer { it ->
+//            time.text = it
+//        })
 
 
         viewModel.snackbar.observe(this, Observer { text ->
@@ -72,24 +74,11 @@ class MainActivity : DaggerAppCompatActivity() {
             }
         })
 
-        viewModel.topDogsAsync.observe(this, Observer {
-            it?.let {
-                it[0].let {
-                    dog_one.breed_name.text = it.breed
-                    it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_one.episode_item_image) }
-                }
 
-                it[1].let {
-                    dog_two.breed_name.text = it.breed
-                    it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_two.episode_item_image) }
-                }
-            }
-        })
-
-        viewModel.dogList.observe(this, Observer {
-            val list = it as List<Dog>
-            adapter.submitList(list)
-        })
+//        viewModel.dogList.observe(this, Observer {
+//            val list = it as List<Dog>
+//            adapter.submitList(list)
+//        })
 
 //        viewModel.topTwoDogs.observe(this, Observer {
 //            when (it) {
@@ -98,42 +87,38 @@ class MainActivity : DaggerAppCompatActivity() {
 //                is GeneralResult.SuccessGeneric<*> -> {
 //                    updateTopTwoDogs(it.data as List<Dog>)
 //                }
-//                is GeneralResult.Error -> {
+//                is GeneralResult.ErrorType -> {
 //                }
 //            }
 //        })
 
 
-        viewModel.liveDataResult.observe(this, Observer {
-            Log.e("liveDataResult", it.toString())
+        viewModel.dogListLiveData.observe(this, Observer {
+            Log.e("liveDataResult......", it.toString())
+            val dogList = mutableListOf<String>()
+            it.forEach {
+                dogList.add(it.breed)
+            }
+            Log.e("dog list", dogList.toString())
+            adapter.submitList(it)
+
+        })
+
+        viewModel.liveDateFetch.observe(this, Observer {
             when (it) {
-                is GeneralResult.Progress -> { showLoadingStatus(it.loading)}
-                is GeneralResult.SuccessGeneric<*> -> {
-                    showLoadingStatus(false)
-                    updateTopTwoDogs(it.data as List<Dog>)
+                is ResultWrapper.Loading -> {
                 }
-                is GeneralResult.Error -> {
+                is ResultWrapper.NetworkError -> {
+                    showToast("NO internet")
                 }
             }
         })
 
     }
 
-    private fun showLoadingStatus(loading: Boolean) {
-        statusTop.text = if (loading) "Loading..." else "Finished"
-    }
-
-    private fun updateTopTwoDogs(it: List<Dog>) {
-        it.let {
-            it[0].let {
-                dog_one.breed_name.text = it.breed
-                it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_one.episode_item_image) }
-            }
-
-            it[1].let {
-                dog_two.breed_name.text = it.breed
-                it.imageUsl?.let { it1 -> ImageLoader.loadImage(this, it1, dog_two.episode_item_image) }
-            }
-        }
+    override fun onResume() {
+        super.onResume()
+        viewModel.fetchDogsFlow()
     }
 }
+
